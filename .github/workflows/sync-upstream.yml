@@ -413,7 +413,7 @@ jobs:
 
           xcodebuild \
             -project ScrollReverser.xcodeproj \
-            -scheme "Scroll Reverser" \
+            -target "Scroll Reverser" \
             -configuration Debug \
             -destination "platform=macOS" \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
