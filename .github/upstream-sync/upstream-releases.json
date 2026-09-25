@@ -1,0 +1,65 @@
+{
+  "upstream_repository": "pilotmoon/Scroll-Reverser",
+  "releases": [
+    {
+      "tag_name": "v1.9",
+      "name": "Scroll Reverser 1.9",
+      "body": "- Fixed issues with the Start at login setting not working correctly on recent versions of macOS.\r\n- New app icon in \"Big Sur\" style.\r\n- Re-launching the app while it is running now shows the prefs window instead of unhiding the status bar icon.\r\n- Only show the step size setting if a scroll wheel is actually used.\r\n- Updates and corrections to the Czech, Slovak, Spanish and Turkish translations. Thanks to community contributors.\r\n- Updated Sparkle (auto-update framework) to latest version.\r\n- Minimum system requirement is now macOS 13.5 (Ventura).",
+      "draft": false,
+      "prerelease": false,
+      "created_at": "2024-06-21T07:24:00Z",
+      "updated_at": "2024-06-21T08:39:27Z",
+      "published_at": "2024-06-21T08:39:27Z",
+      "assets": [
+        {
+          "id": 175086894,
+          "name": "ScrollReverser-1.9.zip",
+          "size": 1699502,
+          "content_type": "application/zip",
+          "updated_at": "2024-06-21T08:37:12Z",
+          "digest": null
+        }
+      ]
+    },
+    {
+      "tag_name": "b10528",
+      "name": "Build 10528",
+      "body": "- Fix slight misalignment of boxes edges in prefs window.\r\n\r\n![CleanShot 2024-06-20 at 09 36 13@2x](https://github.com/pilotmoon/Scroll-Reverser/assets/17520/1409b632-c6d3-40b2-8602-2a3cff75aff0)\r\n",
+      "draft": false,
+      "prerelease": true,
+      "created_at": "2024-06-20T08:34:29Z",
+      "updated_at": "2024-06-20T08:41:30Z",
+      "published_at": "2024-06-20T08:41:30Z",
+      "assets": [
+        {
+          "id": 174874079,
+          "name": "ScrollReverser-build-10528.zip",
+          "size": 1699497,
+          "content_type": "application/zip",
+          "updated_at": "2024-06-20T08:41:27Z",
+          "digest": null
+        }
+      ]
+    },
+    {
+      "tag_name": "b10527",
+      "name": "Build 10527",
+      "body": "- New app icon is now the correct size. Thanks [Stanzilla](https://github.com/pilotmoon/Scroll-Reverser/issues/180) for pointing that out!\r\n\r\n![CleanShot 2024-06-20 at 09 22 20@2x](https://github.com/pilotmoon/Scroll-Reverser/assets/17520/2e051a85-883e-4479-b51f-afb426d8b9ec)\r\n",
+      "draft": false,
+      "prerelease": true,
+      "created_at": "2024-06-20T07:59:31Z",
+      "updated_at": "2024-06-20T08:22:59Z",
+      "published_at": "2024-06-20T08:22:59Z",
+      "assets": [
+        {
+          "id": 174871021,
+          "name": "ScrollReverser-build-10527.zip",
+          "size": 1699485,
+          "content_type": "application/zip",
+          "updated_at": "2024-06-20T08:21:40Z",
+          "digest": null
+        }
+      ]
+    }
+  ]
+}
