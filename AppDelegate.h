@@ -4,7 +4,7 @@
 #import <Cocoa/Cocoa.h>
 #import "StatusItemController.h"
 #import "PermissionsManager.h"
-#import "LauncherController.h"
+#import "LoginItemController.h"
 #import <Sparkle/Sparkle.h>
 
 @class MouseTap, WelcomeWindowController, PrefsWindowController, DebugWindowController, TapLogger, TestWindowController;
@@ -22,7 +22,7 @@ extern NSString *const PrefsShowDiscreteScrollOptions;
 }
 
 @property (readonly) PermissionsManager *permissionsManager;
-@property (readonly) LauncherController *launcherController;
+@property (readonly) LoginItemController *loginItemController;
 @property (readonly) SPUUpdater *updater;
 
 @property (weak) IBOutlet NSMenu *theMainMenu;
@@ -36,7 +36,7 @@ extern NSString *const PrefsShowDiscreteScrollOptions;
 @property (readonly) NSURL *appPermissionsHelpLink;
 
 @property (readonly) NSString *menuStringReverseScrolling;
-@property (readonly) NSString *menuStringPreferences;
+@property (readonly) NSString *menuStringSettings;
 @property (readonly) NSString *menuStringQuit;
 
 @property (getter=isEnabled) BOOL enabled;
@@ -50,9 +50,9 @@ extern NSString *const PrefsShowDiscreteScrollOptions;
 - (void)statusItemRightClicked;
 - (void)statusItemAltClicked;
 
-- (void)refreshPermissions;
 - (void)enableDiscreteScrollOptions;
 
 - (void)logAppEvent:(NSString *)str;
+- (void)stopLogging;
 
 @end

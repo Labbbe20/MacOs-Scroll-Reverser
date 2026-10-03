@@ -35,7 +35,7 @@ static void *_contextPermissions=&_contextPermissions;
 @property DebugWindowController *debugWindowController;
 @property TestWindowController *testWindowController;
 @property PermissionsManager *permissionsManager;
-@property LauncherController *launcherController;
+@property LoginItemController *loginItemController;
 @property TapLogger *logger;
 @property SPUUpdater *updater;
 @property SPUStandardUserDriver *updaterUserDriver;
@@ -163,7 +163,7 @@ static void *_contextPermissions=&_contextPermissions;
 
         self.tap=[[MouseTap alloc] init];
 
-        self.launcherController=[[LauncherController alloc] init];
+        self.loginItemController=[[LoginItemController alloc] init];
 
         self.statusController=[[StatusItemController alloc] init];
         self.statusController.statusItemDelegate=self;
@@ -291,6 +291,11 @@ static void *_contextPermissions=&_contextPermissions;
     return self.logger;
 }
 
+- (void)stopLogging
+{
+    self.logger=nil; // the tap's reference is weak
+}
+
 - (void)logAppEvent:(NSString *)str
 {
     NSString *message=[NSString stringWithFormat:@"%@ %@", str, [self settingsSummary]];
@@ -305,8 +310,8 @@ static void *_contextPermissions=&_contextPermissions;
     [NSApp activateIgnoringOtherApps:YES];
     if(!self.debugWindowController) {
         self.debugWindowController=[[DebugWindowController alloc] initWithWindowNibName:@"DebugWindow"];
-        self.debugWindowController.logger=[self startLogging];
     }
+    self.debugWindowController.logger=[self startLogging];
     [self.debugWindowController showWindow:self];
 }
 
@@ -412,10 +417,6 @@ static void *_contextPermissions=&_contextPermissions;
 
 #pragma mark Permissions
 
-- (void)refreshPermissions {
-    [self.permissionsManager refresh];
-}
-
 - (void)showPermissionsUI {
     [self showPrefsWithDefaultPane:YES];
 }
@@ -460,8 +461,8 @@ static void *_contextPermissions=&_contextPermissions;
 - (NSString *)menuStringReverseScrolling {
     return [NSString stringWithFormat:NSLocalizedString(@"Enable %1$@", @"1=name of app e.g. `Enable Scroll Reverser`"), self.appName];
 }
-- (NSString *)menuStringPreferences {
-    return [NSLocalizedString(@"Preferences", nil) stringByAppendingString:@"..."];
+- (NSString *)menuStringSettings {
+    return NSLocalizedString(@"Settings…", @"Menu item that opens the settings window, including the trailing ellipsis");
 }
 - (NSString *)menuStringQuit {
     return [NSString stringWithFormat:NSLocalizedString(@"Quit %1$@",@"1=name of app e.g. `Quit Scroll Reverser`"`), self.appName];
