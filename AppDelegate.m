@@ -62,13 +62,8 @@ static void *_contextPermissions=&_contextPermissions;
     if (!urlString) {
         if([self appIsProductionBuild]||[self appIsBetaBuild])
         {
-            urlString=@"https://softwareupdate.pilotmoon.com/update/scrollreverser/";
-            if ([[NSUserDefaults standardUserDefaults] boolForKey:PrefsBetaUpdates]) {
-                urlString=[urlString stringByAppendingString:@"appcast-beta.xml"];
-            }
-            else {
-                urlString=[urlString stringByAppendingString:@"appcast.xml"];
-            }
+            // one feed for both channels; beta items are tagged with the Beta channel
+            urlString=@"https://softwareupdate.pilotmoon.com/update/scrollreverser/appcast.xml";
         }
     }
     return urlString ? urlString : @"https://localhost/";
@@ -77,6 +72,14 @@ static void *_contextPermissions=&_contextPermissions;
 - (NSString *)feedURLStringForUpdater:(SPUUpdater *)updater
 {
     return [[self class] sparkleFeedURLString];
+}
+
+- (NSSet<NSString *> *)allowedChannelsForUpdater:(SPUUpdater *)updater
+{
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:PrefsBetaUpdates]) {
+        return [NSSet setWithObject:@"Beta"];
+    }
+    return [NSSet set];
 }
 
 - (BOOL)updaterShouldPromptForPermissionToCheckForUpdates:(SPUUpdater *)bundle
@@ -169,6 +172,7 @@ static void *_contextPermissions=&_contextPermissions;
         self.statusController.statusItemDelegate=self;
         self.statusController.visible=![[NSUserDefaults standardUserDefaults] boolForKey:PrefsHideIcon];
         [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:PrefsHideIcon options:0 context:_contextHideIcon];
+        [self.statusController attachMenu:[self makeStatusMenu]];
 
         self.permissionsManager=[[PermissionsManager alloc] init];
 
@@ -198,21 +202,17 @@ static void *_contextPermissions=&_contextPermissions;
 
 #pragma mark Application events
 
-- (void)awakeFromNib {
-    [self.statusController attachMenu:self.statusMenu];
-}
-    
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // Even though the app has no visible main menu, we set a minimal menu for keyboard shortcut support.
     // For example, ⌘W to close the prefs window.
-    [NSApp setMainMenu:self.theMainMenu];
+    [NSApp setMainMenu:[self makeMainMenu]];
 
     // Show the welcome window if the user hasn't run Scroll Reverser before.
     const BOOL first=![[NSUserDefaults standardUserDefaults] boolForKey:PrefsHasRunBefore];
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:PrefsHasRunBefore];
     if(first) {
-        self.welcomeWindowController=[[WelcomeWindowController alloc] initWithWindowNibName:@"WelcomeWindow"];
+        self.welcomeWindowController=[[WelcomeWindowController alloc] init];
         [self.welcomeWindowController showWindow:self];
     }
     
@@ -267,6 +267,59 @@ static void *_contextPermissions=&_contextPermissions;
     return [key isEqualToString:@"enabled"];
 }
 
+#pragma mark Menus
+
+- (NSMenu *)makeStatusMenu
+{
+    NSMenu *const menu=[[NSMenu alloc] init];
+    NSMenuItem *const enableItem=[[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:NSLocalizedString(@"Enable %1$@", @"1=name of app e.g. `Enable Scroll Reverser`"), self.appName] action:nil keyEquivalent:@""];
+    [enableItem bind:NSValueBinding toObject:self withKeyPath:@"enabled" options:nil];
+    [menu addItem:enableItem];
+    [menu addItem:[NSMenuItem separatorItem]];
+    [self addSettingsAndQuitItemsToMenu:menu separated:NO];
+    return menu;
+}
+
+- (NSMenu *)makeMainMenu
+{
+    NSMenu *const mainMenu=[[NSMenu alloc] init];
+    NSMenu *(^addSubmenu)(NSString *)=^(NSString *title) {
+        NSMenu *const submenu=[[NSMenu alloc] initWithTitle:title];
+        NSMenuItem *const item=[[NSMenuItem alloc] initWithTitle:title action:nil keyEquivalent:@""];
+        item.submenu=submenu;
+        [mainMenu addItem:item];
+        return submenu;
+    };
+
+    // The app menu must be the first item. Its Settings… and Quit items give ⌘, and ⌘Q while one of our windows is focused.
+    NSMenu *const appMenu=addSubmenu(self.appName);
+    [self addSettingsAndQuitItemsToMenu:appMenu separated:YES];
+
+    NSMenu *const fileMenu=addSubmenu(@"File");
+    [fileMenu addItemWithTitle:@"Close" action:@selector(performClose:) keyEquivalent:@"w"];
+
+    NSMenu *const editMenu=addSubmenu(@"Edit");
+    [editMenu addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@"c"];
+    [editMenu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];
+
+    NSMenu *const windowMenu=addSubmenu(@"Window");
+    [windowMenu addItemWithTitle:@"Minimize" action:@selector(miniaturize:) keyEquivalent:@"m"];
+
+    return mainMenu;
+}
+
+// Used by both the status menu and the app menu.
+- (void)addSettingsAndQuitItemsToMenu:(NSMenu *)menu separated:(BOOL)separated
+{
+    NSMenuItem *const settingsItem=[menu addItemWithTitle:NSLocalizedString(@"Settings…", @"Menu item that opens the settings window, including the trailing ellipsis") action:@selector(showPrefs:) keyEquivalent:@","];
+    settingsItem.target=self;
+    if (separated) {
+        [menu addItem:[NSMenuItem separatorItem]];
+    }
+    NSMenuItem *const quitItem=[menu addItemWithTitle:[NSString stringWithFormat:NSLocalizedString(@"Quit %1$@", @"1=name of app e.g. `Quit Scroll Reverser`"), self.appName] action:@selector(terminate:) keyEquivalent:@"q"];
+    quitItem.target=NSApp;
+}
+
 #pragma mark Logging
 
 - (NSString *)settingsSummary
@@ -308,10 +361,12 @@ static void *_contextPermissions=&_contextPermissions;
 - (IBAction)showDebug:(id)sender
 {
     [NSApp activateIgnoringOtherApps:YES];
+    // start logging first, so the console's own startup messages are captured
+    Logger *const logger=[self startLogging];
     if(!self.debugWindowController) {
-        self.debugWindowController=[[DebugWindowController alloc] initWithWindowNibName:@"DebugWindow"];
+        self.debugWindowController=[[DebugWindowController alloc] init];
     }
-    self.debugWindowController.logger=[self startLogging];
+    self.debugWindowController.logger=logger;
     [self.debugWindowController showWindow:self];
 }
 
@@ -319,7 +374,7 @@ static void *_contextPermissions=&_contextPermissions;
 {
     [NSApp activateIgnoringOtherApps:YES];
     if(!self.prefsWindowController) {
-        self.prefsWindowController=[[PrefsWindowController alloc] initWithWindowNibName:@"PrefsWindow"];
+        self.prefsWindowController=[[PrefsWindowController alloc] init];
     }
     if (showDefault) {
         [self.prefsWindowController showPermissionsPane];
@@ -344,7 +399,7 @@ static void *_contextPermissions=&_contextPermissions;
 {
     [NSApp activateIgnoringOtherApps:YES];
     if(!self.testWindowController) {
-        self.testWindowController=[[TestWindowController alloc] initWithWindowNibName:@"TestWindow"];
+        self.testWindowController=[[TestWindowController alloc] init];
     }
     [self.testWindowController showWindow:self];
 }
@@ -454,18 +509,6 @@ static void *_contextPermissions=&_contextPermissions;
 
 - (NSURL *)appPermissionsHelpLink {
     return [NSURL URLWithString:@"https://pilotmoon.com/link/scrollreverser/help/permissions"];
-}
-
-#pragma mark Other UI Strings
-
-- (NSString *)menuStringReverseScrolling {
-    return [NSString stringWithFormat:NSLocalizedString(@"Enable %1$@", @"1=name of app e.g. `Enable Scroll Reverser`"), self.appName];
-}
-- (NSString *)menuStringSettings {
-    return NSLocalizedString(@"Settings…", @"Menu item that opens the settings window, including the trailing ellipsis");
-}
-- (NSString *)menuStringQuit {
-    return [NSString stringWithFormat:NSLocalizedString(@"Quit %1$@",@"1=name of app e.g. `Quit Scroll Reverser`"`), self.appName];
 }
 
 @end
