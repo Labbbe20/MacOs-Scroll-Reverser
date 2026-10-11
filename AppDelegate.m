@@ -92,7 +92,7 @@ static void *_contextPermissions=&_contextPermissions;
     NSLog(@"Loaded appcast.");
 }
 
-#pragma mark Launch, relaunch and termination
+#pragma mark Launch and termination
 
 // There can be only one scroll reverser
 + (void)terminateOthers
@@ -103,38 +103,6 @@ static void *_contextPermissions=&_contextPermissions;
             if ([[app.bundleIdentifier lowercaseString] isEqualToString:[[NSRunningApplication currentApplication].bundleIdentifier lowercaseString]]) {
                 [app terminate];
             }
-        }
-    }
-}
-
-/* Quickly and quietly quit and relaunch our own process. This is called on wake from sleep as a
- workaround for a macOS bug whereby the OS stops calling our event taps after sleep.
- */
-- (void)relaunch
-{
-    [self logAppEvent:@"Scroll Reverser will relaunch"];
-
-    NSWorkspaceOpenConfiguration *config = [[NSWorkspaceOpenConfiguration alloc] init];
-    config.createsNewApplicationInstance = YES;
-    [[NSWorkspace sharedWorkspace] openApplicationAtURL:[NSBundle mainBundle].bundleURL
-                                          configuration:config
-                                      completionHandler:^(NSRunningApplication * _Nullable app, NSError * _Nullable error) {
-        if (app) {
-            NSLog(@"Launched new instance: %@", app);
-        }
-        if (error) {
-            NSLog(@"Error launching new instance: %@", error);
-        }
-    }];
-}
-
-- (void)handleURLEvent:(NSAppleEventDescriptor *)event withReplyEvent: (NSAppleEventDescriptor *)replyEvent
-{
-    NSURL* url = [NSURL URLWithString:[[event paramDescriptorForKeyword:keyDirectObject] stringValue]];
-    NSLog(@"Handling URL: %@", url);
-    if ([[url scheme] isEqualToString:BUILDSCRIPTS_URL_SCHEME]) {
-        if ([[url host] isEqualToString:@"launch"]) {
-            NSLog(@"Launch via URL");
         }
     }
 }
@@ -158,49 +126,43 @@ static void *_contextPermissions=&_contextPermissions;
     }
 }
 
-- (id)init
-{
-    self=[super init];
-    if (self) {
-        [[self class] terminateOthers];
-
-        self.tap=[[MouseTap alloc] init];
-
-        self.loginItemController=[[LoginItemController alloc] init];
-
-        self.statusController=[[StatusItemController alloc] init];
-        self.statusController.statusItemDelegate=self;
-        self.statusController.visible=![[NSUserDefaults standardUserDefaults] boolForKey:PrefsHideIcon];
-        [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:PrefsHideIcon options:0 context:_contextHideIcon];
-        [self.statusController attachMenu:[self makeStatusMenu]];
-
-        self.permissionsManager=[[PermissionsManager alloc] init];
-
-        NSBundle *const hostBundle = [NSBundle mainBundle];
-        self.updaterUserDriver = [[SPUStandardUserDriver alloc] initWithHostBundle:hostBundle delegate:self];
-        self.updater = [[SPUUpdater alloc] initWithHostBundle:hostBundle applicationBundle:hostBundle userDriver:self.updaterUserDriver delegate:self];
-        NSError *error=nil;
-        if (![self.updater startUpdater:&error]) {
-            NSLog(@"Updater failed to start: %@", error);
-        }
-        else {
-            NSLog(@"Updater started");
-        }
-
-        // event handler for url events (for launching)
-        [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
-                                                           andSelector:@selector(handleURLEvent:withReplyEvent:)
-                                                         forEventClass:kInternetEventClass
-                                                            andEventID:kAEGetURL];
-    }
-    return self;
-}
 
 - (void)dealloc {
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 }
 
 #pragma mark Application events
+
+- (void)applicationWillFinishLaunching:(NSNotification *)notification
+{
+    // This setup used to be in init, but main creates the delegate before NSApplicationMain has
+    // registered the app with the window server. Doing it that early made the app abort on macOS 13
+    // when creating the status item, and then never receive clicks or become active.
+    [[self class] terminateOthers];
+
+    self.tap=[[MouseTap alloc] init];
+
+    self.loginItemController=[[LoginItemController alloc] init];
+
+    self.statusController=[[StatusItemController alloc] init];
+    self.statusController.statusItemDelegate=self;
+    self.statusController.visible=![[NSUserDefaults standardUserDefaults] boolForKey:PrefsHideIcon];
+    [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:PrefsHideIcon options:0 context:_contextHideIcon];
+    [self.statusController attachMenu:[self makeStatusMenu]];
+
+    self.permissionsManager=[[PermissionsManager alloc] init];
+
+    NSBundle *const hostBundle = [NSBundle mainBundle];
+    self.updaterUserDriver = [[SPUStandardUserDriver alloc] initWithHostBundle:hostBundle delegate:self];
+    self.updater = [[SPUUpdater alloc] initWithHostBundle:hostBundle applicationBundle:hostBundle userDriver:self.updaterUserDriver delegate:self];
+    NSError *error=nil;
+    if (![self.updater startUpdater:&error]) {
+        NSLog(@"Updater failed to start: %@", error);
+    }
+    else {
+        NSLog(@"Updater started");
+    }
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
@@ -237,10 +199,14 @@ static void *_contextPermissions=&_contextPermissions;
     [[NSUserDefaults standardUserDefaults] setBool:NO forKey:PrefsTerminatedWithPrefsWindowOpen];
 }
 
+/* Recreate the event taps on wake from sleep. This works around a macOS bug, seen from 10.10 to 10.12,
+ whereby the OS stopped sending gesture events to our taps after sleep, so trackpad scrolling was
+ mistaken for mouse scrolling (issue #15).
+ */
 - (void)appDidWake:(NSNotification *)note
 {
-    [self logAppEvent:@"OS woke from sleep - will relaunch"];
-    [self relaunch];
+    [self logAppEvent:@"OS woke from sleep - will restart tap"];
+    [self.tap restart];
 }
 
 - (void)appWillSleep:(NSNotification *)note
