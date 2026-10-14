@@ -20,6 +20,7 @@ NSString *const PrefsHideIcon=@"HideIcon";
 NSString *const PrefsBetaUpdates=@"BetaUpdates";
 NSString *const PrefsAppcastOverrideURL=@"AppcastOverrideURL";
 NSString *const PrefsTerminatedWithPrefsWindowOpen=@"TerminatedWithPrefsWindowOpen";
+NSString *const PrefsDiscreteScrollStepSizeEnabled=@"DiscreteScrollStepSizeEnabled";
 NSString *const PrefsDiscreteScrollStepSize=@"DiscreteScrollStepSize";
 NSString *const PrefsShowDiscreteScrollOptions=@"ShowDiscreteScrollOptions";
 
@@ -119,10 +120,18 @@ static void *_contextPermissions=&_contextPermissions;
             PrefsReverseVertical: @(YES),
             PrefsReverseTrackpad: @(YES),
             PrefsReverseMouse: @(YES),
+            PrefsDiscreteScrollStepSizeEnabled: @(YES),
             PrefsDiscreteScrollStepSize: @(3),
             LoggerMaxEntries: @(50000),
             PrefsBetaUpdates: @([self appIsBetaBuild]),
         }];
+
+        // Step size 0 used to mean off; it is now a separate setting.
+        NSUserDefaults *const defaults=[NSUserDefaults standardUserDefaults];
+        if ([defaults integerForKey:PrefsDiscreteScrollStepSize]<1) {
+            [defaults setBool:NO forKey:PrefsDiscreteScrollStepSizeEnabled];
+            [defaults removeObjectForKey:PrefsDiscreteScrollStepSize];
+        }
     }
 }
 
@@ -194,7 +203,7 @@ static void *_contextPermissions=&_contextPermissions;
     self.enabled=enabledInPrefs;
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:PrefsTerminatedWithPrefsWindowOpen]) {
-        [self showPrefs:self];
+        [self orderFrontPreferencesPanel:self];
     }
     [[NSUserDefaults standardUserDefaults] setBool:NO forKey:PrefsTerminatedWithPrefsWindowOpen];
 }
@@ -224,7 +233,7 @@ static void *_contextPermissions=&_contextPermissions;
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
 {
-    [self showPrefs:nil];
+    [self orderFrontPreferencesPanel:nil];
     return NO;
 }
 
@@ -277,7 +286,7 @@ static void *_contextPermissions=&_contextPermissions;
 // Used by both the status menu and the app menu.
 - (void)addSettingsAndQuitItemsToMenu:(NSMenu *)menu separated:(BOOL)separated
 {
-    NSMenuItem *const settingsItem=[menu addItemWithTitle:NSLocalizedString(@"Settings…", @"Menu item that opens the settings window, including the trailing ellipsis") action:@selector(showPrefs:) keyEquivalent:@","];
+    NSMenuItem *const settingsItem=[menu addItemWithTitle:NSLocalizedString(@"Settings…", @"Menu item that opens the settings window, including the trailing ellipsis") action:@selector(orderFrontPreferencesPanel:) keyEquivalent:@","];
     settingsItem.target=self;
     if (separated) {
         [menu addItem:[NSMenuItem separatorItem]];
@@ -348,7 +357,7 @@ static void *_contextPermissions=&_contextPermissions;
     [self.prefsWindowController showWindow:self];
 }
 
-- (IBAction)showPrefs:(id)sender
+- (IBAction)orderFrontPreferencesPanel:(id)sender
 {
     [self showPrefsWithDefaultPane:NO];
 }

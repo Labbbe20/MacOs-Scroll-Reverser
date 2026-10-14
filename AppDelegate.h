@@ -15,6 +15,7 @@ extern NSString *const PrefsReverseVertical;
 extern NSString *const PrefsReverseTrackpad;
 extern NSString *const PrefsReverseMouse;
 extern NSString *const PrefsHideIcon;
+extern NSString *const PrefsDiscreteScrollStepSizeEnabled;
 extern NSString *const PrefsDiscreteScrollStepSize;
 extern NSString *const PrefsShowDiscreteScrollOptions;
 
@@ -35,7 +36,7 @@ extern NSString *const PrefsShowDiscreteScrollOptions;
 @property (getter=isEnabled) BOOL enabled;
 
 - (IBAction)showDebug:(id)sender;
-- (IBAction)showPrefs:(id)sender;
+- (IBAction)orderFrontPreferencesPanel:(id)sender;
 - (IBAction)showAbout:(id)sender;
 - (IBAction)showTestWindow:(id)sender;
 
