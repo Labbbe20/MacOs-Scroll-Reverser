@@ -2,6 +2,17 @@
   "upstream_repository": "pilotmoon/Scroll-Reverser",
   "releases": [
     {
+      "tag_name": "b20620",
+      "name": "Scroll Reverser Build 20620 -- v2.0 candidate 1",
+      "body": "This is a beta leading towards Scroll Reverser 2.0. It is a major update aiming to solve common pain points of the 1.x versions, whilst remaining simple and easy to use. I never expected when I created this app 15 years ago that I'd still be updating it in 2026, but here we are, and it still seems to be as popular as ever! The app remains free and open source — see the code at <https://github.com/pilotmoon/Scroll-Reverser>.\r\n\r\n<img width=\"1700\" height=\"940\" alt=\"CleanShot 2026-10-16 at 21 13 52@2x\" src=\"https://github.com/user-attachments/assets/8b7becc1-9f55-4e80-b414-b728e9f943f6\" />\r\n\r\nWhat's new:\r\n\r\n- **A setting for each device.** Each trackpad, mouse or other input device now has its own individual setting so you can set each one exactly how you like it. Devices appear in Settings › Scrolling the first time you use them.\r\n\r\n- **More reliable and more efficient.** Scroll Reverser no longer detects a trackpad by counting the fingers touching it via gesture events. Instead, it reads device information directly. This was a frequent source of unreliability in previous versions.\r\n\r\n- **Only needs Accessibility permission.** Input Monitoring permission is no longer required.\r\n\r\n- **Better support for remote input devices.** Scrolling sources such as Universal Control and Screen Sharing each get their own setting, letting you tweak your setup more precisely than before.\r\n\r\n_After upgrading from 1.x, please check your individual devices in Settings › Scrolling._\r\n",
+      "draft": false,
+      "prerelease": true,
+      "created_at": "2026-10-16T15:14:40Z",
+      "updated_at": "2026-10-16T20:18:06Z",
+      "published_at": "2026-10-16T20:17:36Z",
+      "assets": []
+    },
+    {
       "tag_name": "v1.9.1",
       "name": "Scroll Reverser 1.9.1",
       "body": "- Fixed issues where Scroll Reverser could stop working randomly or after waking from sleep.\r\n- Fixed the menu bar icon sometimes appearing blurry on displays with a different resolution from the main display.\r\n- Fixed long lines in the debug console wrapping incorrectly.\r\n- \"Preferences\" is now called \"Settings\", to match macOS.\r\n- Updated Sparkle (auto-update framework) to version 2.10.0.\r\n- Added Persian translation, and corrected to the Swedish and Polish translations.\r\n\r\n## New Contributors\r\n* @eendriu92 made their first contribution in https://github.com/pilotmoon/Scroll-Reverser/pull/198\r\n* @RDIL made their first contribution in https://github.com/pilotmoon/Scroll-Reverser/pull/197\r\n* @ChaoXu-hub made their first contribution in https://github.com/pilotmoon/Scroll-Reverser/pull/206\r\n* @telj89 made their first contribution in https://github.com/pilotmoon/Scroll-Reverser/pull/208\r\n* @aliafshany made their first contribution in https://github.com/pilotmoon/Scroll-Reverser/pull/210\r\n\r\n**Full Changelog**: https://github.com/pilotmoon/Scroll-Reverser/compare/v1.9...v1.9.1",
@@ -30,17 +41,6 @@
       "created_at": "2026-10-10T16:22:14Z",
       "updated_at": "2026-10-10T16:25:47Z",
       "published_at": "2026-10-10T16:25:47Z",
-      "assets": []
-    },
-    {
-      "tag_name": "b10556",
-      "name": "Build 10556",
-      "body": "- Fixed an issue where Scroll Reverser could stop reversing until it was restarted. macOS can briefly switch off Scroll Reverser's event tap when the system is busy, and Scroll Reverser now turns it back on correctly. (Thanks, Chao Xu.)\r\n- Scroll Reverser no longer quits and relaunches itself every time your Mac wakes from sleep. It now restarts its event tap instead. Beta testers: please report any trackpad scrolling being treated as mouse scrolling after waking.\r\n- Fixed the menu bar icon sometimes appearing blurry, especially on displays with a different resolution from the main display. (Thanks, Reece Dunham.)\r\n- \"Preferences\" is now called \"Settings\", to match macOS. You can open Settings with ⌘, and quit with ⌘Q, including while the Settings window is open. (Thanks, Zhixuan Jiang.)\r\n- Scroll Reverser no longer checks its permissions continuously while you scroll, which reduces the work it does on every scroll. (Thanks, Zhixuan Jiang.)\r\n- Fixed memory use growing over time after the debug console had been opened and closed. (Thanks, Zhixuan Jiang.)\r\n- Debug console improvements: long lines no longer overlap, old entries no longer reappear after reopening it, and it now shows when macOS switches off the event tap.\r\n- The Settings, welcome and debug console windows and the app's menus have been rebuilt. They should look and work as before, so please report anything that seems out of place.\r\n- Corrections to the Swedish and Polish translations. Thanks to community contributors.\r\n- Updated Sparkle (auto-update framework) to version 2.10.0.\r\n\r\n\r\n**Full Changelog**: https://github.com/pilotmoon/Scroll-Reverser/compare/v1.9...b10556",
-      "draft": false,
-      "prerelease": true,
-      "created_at": "2026-10-08T18:14:08Z",
-      "updated_at": "2026-10-10T16:22:07Z",
-      "published_at": "2026-10-10T16:01:52Z",
       "assets": []
     }
   ]
