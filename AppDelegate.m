@@ -9,20 +9,14 @@
 #import "DebugWindowController.h"
 #import "TestWindowController.h"
 #import "TapLogger.h"
+#import "SourceTable.h"
 
 NSString *const PrefsReverseScrolling=@"InvertScrollingOn";
-NSString *const PrefsReverseHorizontal=@"ReverseX";
-NSString *const PrefsReverseVertical=@"ReverseY";
-NSString *const PrefsReverseTrackpad=@"ReverseTrackpad";
-NSString *const PrefsReverseMouse=@"ReverseMouse";
 NSString *const PrefsHasRunBefore=@"HasRunBefore";
 NSString *const PrefsHideIcon=@"HideIcon";
 NSString *const PrefsBetaUpdates=@"BetaUpdates";
 NSString *const PrefsAppcastOverrideURL=@"AppcastOverrideURL";
 NSString *const PrefsTerminatedWithPrefsWindowOpen=@"TerminatedWithPrefsWindowOpen";
-NSString *const PrefsDiscreteScrollStepSizeEnabled=@"DiscreteScrollStepSizeEnabled";
-NSString *const PrefsDiscreteScrollStepSize=@"DiscreteScrollStepSize";
-NSString *const PrefsShowDiscreteScrollOptions=@"ShowDiscreteScrollOptions";
 
 static void *_contextHideIcon=&_contextHideIcon;
 static void *_contextEnabled=&_contextEnabled;
@@ -30,6 +24,7 @@ static void *_contextPermissions=&_contextPermissions;
 
 @interface AppDelegate ()
 @property MouseTap *tap;
+@property SourceTable *sourceTable;
 @property StatusItemController *statusController;
 @property WelcomeWindowController *welcomeWindowController;
 @property PrefsWindowController *prefsWindowController;
@@ -116,22 +111,9 @@ static void *_contextPermissions=&_contextPermissions;
     {
         [[NSUserDefaults standardUserDefaults] registerDefaults:@{
             PrefsReverseScrolling: @(NO),
-            PrefsReverseHorizontal: @(NO),
-            PrefsReverseVertical: @(YES),
-            PrefsReverseTrackpad: @(YES),
-            PrefsReverseMouse: @(YES),
-            PrefsDiscreteScrollStepSizeEnabled: @(YES),
-            PrefsDiscreteScrollStepSize: @(3),
             LoggerMaxEntries: @(50000),
             PrefsBetaUpdates: @([self appIsBetaBuild]),
         }];
-
-        // Step size 0 used to mean off; it is now a separate setting.
-        NSUserDefaults *const defaults=[NSUserDefaults standardUserDefaults];
-        if ([defaults integerForKey:PrefsDiscreteScrollStepSize]<1) {
-            [defaults setBool:NO forKey:PrefsDiscreteScrollStepSizeEnabled];
-            [defaults removeObjectForKey:PrefsDiscreteScrollStepSize];
-        }
     }
 }
 
@@ -149,7 +131,8 @@ static void *_contextPermissions=&_contextPermissions;
     // when creating the status item, and then never receive clicks or become active.
     [[self class] terminateOthers];
 
-    self.tap=[[MouseTap alloc] init];
+    self.sourceTable=[[SourceTable alloc] init];
+    self.tap=[[MouseTap alloc] initWithSourceTable:self.sourceTable];
 
     self.loginItemController=[[LoginItemController alloc] init];
 
@@ -208,14 +191,9 @@ static void *_contextPermissions=&_contextPermissions;
     [[NSUserDefaults standardUserDefaults] setBool:NO forKey:PrefsTerminatedWithPrefsWindowOpen];
 }
 
-/* Recreate the event taps on wake from sleep. This works around a macOS bug, seen from 10.10 to 10.12,
- whereby the OS stopped sending gesture events to our taps after sleep, so trackpad scrolling was
- mistaken for mouse scrolling (issue #15).
- */
 - (void)appDidWake:(NSNotification *)note
 {
-    [self logAppEvent:@"OS woke from sleep - will restart tap"];
-    [self.tap restart];
+    [self logAppEvent:@"OS woke from sleep"];
 }
 
 - (void)appWillSleep:(NSNotification *)note
@@ -226,6 +204,7 @@ static void *_contextPermissions=&_contextPermissions;
 - (void)applicationWillTerminate:(NSNotification *)notification
 {
     [self logAppEvent:@"Scroll Reverser will terminate"];
+    [self.sourceTable save];
     if (self.prefsWindowController.window.visible) {
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:PrefsTerminatedWithPrefsWindowOpen];
     }
@@ -273,8 +252,15 @@ static void *_contextPermissions=&_contextPermissions;
     NSMenu *const fileMenu=addSubmenu(@"File");
     [fileMenu addItemWithTitle:@"Close" action:@selector(performClose:) keyEquivalent:@"w"];
 
+    // standard text editing, for the fields in the settings window
     NSMenu *const editMenu=addSubmenu(@"Edit");
+    // (AppKit handles undo: and redo: but doesn't declare them)
+    [editMenu addItemWithTitle:@"Undo" action:NSSelectorFromString(@"undo:") keyEquivalent:@"z"];
+    [editMenu addItemWithTitle:@"Redo" action:NSSelectorFromString(@"redo:") keyEquivalent:@"Z"];
+    [editMenu addItem:[NSMenuItem separatorItem]];
+    [editMenu addItemWithTitle:@"Cut" action:@selector(cut:) keyEquivalent:@"x"];
     [editMenu addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@"c"];
+    [editMenu addItemWithTitle:@"Paste" action:@selector(paste:) keyEquivalent:@"v"];
     [editMenu addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];
 
     NSMenu *const windowMenu=addSubmenu(@"Window");
@@ -302,12 +288,7 @@ static void *_contextPermissions=&_contextPermissions;
     NSString *(^yn)(NSString *, BOOL) = ^(NSString *label, BOOL state) {
         return [NSString stringWithFormat:@"[%@ %@]", label, state?@"yes":@"no"];
     };
-    NSString *temp=yn(@"on", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseScrolling]);
-    temp=[temp stringByAppendingString:yn(@"v", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseVertical])];
-    temp=[temp stringByAppendingString:yn(@"h", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseHorizontal])];
-    temp=[temp stringByAppendingString:yn(@"trackpad", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseTrackpad])];
-    temp=[temp stringByAppendingString:yn(@"mouse", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseMouse])];
-    return temp;
+    return yn(@"on", [[NSUserDefaults standardUserDefaults] boolForKey:PrefsReverseScrolling]);
 }
 
 - (Logger *)startLogging
@@ -449,13 +430,6 @@ static void *_contextPermissions=&_contextPermissions;
 
 - (void)showPermissionsUI {
     [self showPrefsWithDefaultPane:YES];
-}
-
-#pragma mark Special
-
-- (void)enableDiscreteScrollOptions
-{
-    [[NSUserDefaultsController sharedUserDefaultsController] setValue:@YES forKeyPath:@"values.ShowDiscreteScrollOptions"];
 }
 
 #pragma mark App info strings
