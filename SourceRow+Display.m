@@ -12,6 +12,8 @@ NSString *SourceDirectionModeTitle(ScrollDirectionMode mode)
             return NSLocalizedString(@"Classic", @"Scrolling direction: the opposite of natural scrolling");
         case ScrollDirectionModeReversed:
             return NSLocalizedString(@"Reversed", @"Scrolling menu item: reverse the direction of scrolling posted by an app");
+        case ScrollDirectionModeMatchVertical:
+            return NSLocalizedString(@"Match vertical", @"Horizontal scrolling menu item: reverse horizontal scrolling whenever vertical scrolling is reversed");
         case ScrollDirectionModeUnchanged:
         default:
             return NSLocalizedString(@"Unchanged", @"Scrolling menu item: leave scrolling as the system delivers it");
@@ -127,14 +129,9 @@ static NSString *_unidentifiedSource(void)
     if (!self.hasDeviceDirection) {
         return NSLocalizedString(@"Unknown", @"System direction of scrolling posted by an app, which the system doesn't say");
     }
-    if (self.seenNatural&&self.seenClassic) {
-        return NSLocalizedString(@"Both natural and classic", @"System direction of a source whose scrolling the system has delivered both ways");
-    }
-    if (self.seenNatural) {
-        return SourceDirectionModeTitle(ScrollDirectionModeNatural);
-    }
-    if (self.seenClassic) {
-        return SourceDirectionModeTitle(ScrollDirectionModeClassic);
+    // the latest, since the system setting can change
+    if (self.seenNatural||self.seenClassic) {
+        return SourceDirectionModeTitle(self.lastNatural?ScrollDirectionModeNatural:ScrollDirectionModeClassic);
     }
     return @"—";
 }
