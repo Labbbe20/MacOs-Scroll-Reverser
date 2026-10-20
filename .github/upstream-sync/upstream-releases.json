@@ -2,6 +2,26 @@
   "upstream_repository": "pilotmoon/Scroll-Reverser",
   "releases": [
     {
+      "tag_name": "v2.0",
+      "name": "Scroll Reverser 2.0",
+      "body": "Scroll Reverser 2.0 aims to solve common pain points of the 1.x versions and be even simpler to use. The app remains free and open source. _After upgrading from 1.x, please check your individual devices in Settings › Scrolling._\r\n\r\n<img width=\"1700\" height=\"940\" alt=\"srshot-2 0\" src=\"https://github.com/user-attachments/assets/cfca9bde-8eb6-4dd5-b640-7a0ce5b94266\" />\r\n\r\nWhat's new in 2.0:\r\n\r\n- **A setting for each device.** Each individual trackpad, mouse or other input device now has its own scroll direction setting. Devices appear in Settings › Scrolling the first time you use them.\r\n\r\n- **Direction is set as \"natural\" or \"classic\".** Specify the outcome you want, instead how to get there. Trackpads default to natural, mice default to classic.\r\n\r\n- **More reliable and more efficient.** Scroll Reverser no longer detects trackpad usage using a gesture event tap. Instead, it reads device information directly. Instability of the gesture tap was was a frequent source of unreliability in previous versions.\r\n\r\n- **Better support for remote input devices.** Devices connected via Universal Control are recognised correctly, and a new \"unchanged\" option acts as a passthrough for situations like Screen Sharing.\r\n\r\n- **Only needs Accessibility permission.** Input Monitoring permission is no longer required.\r\n\r\nFixed:\r\n\r\n- Fixed bug where Scroll reverser could suddenly stop working and need to be relaunched.\r\n- Fixed the menu bar icon appearing blurry on displays with a different resolution from the main display.\r\n- Fixed long lines in the debug console wrapping incorrectly.\r\n\r\nAdded/Changed:\r\n\r\n- \"Preferences\" is now called \"Settings\", to match macOS.\r\n- Updated Sparkle (auto-update framework) to version 2.10.0.\r\n- Added Persian localization.\r\n",
+      "draft": false,
+      "prerelease": false,
+      "created_at": "2026-10-19T18:32:42Z",
+      "updated_at": "2026-10-19T19:06:30Z",
+      "published_at": "2026-10-19T19:06:30Z",
+      "assets": [
+        {
+          "id": 657165358,
+          "name": "ScrollReverser-2.0.zip",
+          "size": 1757379,
+          "content_type": "application/zip",
+          "updated_at": "2026-10-19T19:06:16Z",
+          "digest": "sha256:9b304a08c902a123381d85c7e38e17a462e8b6edaba9336646a5769ff15b3f80"
+        }
+      ]
+    },
+    {
       "tag_name": "b20627",
       "name": "Scroll Reverser build 20627 -- v2.0 candidate 3",
       "body": "- Fixed the \"Automatic updates:\" label being missing in some langauges.\r\n\r\n**Full Changelog**: https://github.com/pilotmoon/Scroll-Reverser/compare/b20626...b20627",
@@ -30,17 +50,6 @@
       "created_at": "2026-10-17T13:12:54Z",
       "updated_at": "2026-10-17T13:30:50Z",
       "published_at": "2026-10-17T13:19:10Z",
-      "assets": []
-    },
-    {
-      "tag_name": "b20620",
-      "name": "Scroll Reverser build 20620 -- v2.0 candidate 1",
-      "body": "This is a beta leading towards Scroll Reverser 2.0. It is a major update aiming to solve common pain points of the 1.x versions, whilst remaining simple and easy to use. I never expected when I created this app 15 years ago that I'd still be updating it in 2026, but here we are!\r\n\r\n<img width=\"1700\" height=\"940\" alt=\"CleanShot 2026-10-16 at 21 13 52@2x\" src=\"https://github.com/user-attachments/assets/8b7becc1-9f55-4e80-b414-b728e9f943f6\" />\r\n\r\nWhat's new:\r\n\r\n- **A setting for each device.** Each trackpad, mouse or other input device now has its own individual setting so you can set each one exactly how you like it. Devices appear in Settings › Scrolling the first time you use them.\r\n\r\n- **More reliable and more efficient.** Scroll Reverser no longer detects a trackpad by counting the fingers touching it via gesture events. Instead, it reads device information directly. This was a frequent source of unreliability in previous versions.\r\n\r\n- **Only needs Accessibility permission.** Input Monitoring permission is no longer required.\r\n\r\n- **Better support for remote input devices.** Scrolling sources such as Universal Control and Screen Sharing each get their own setting, letting you tweak your setup more precisely than before.\r\n\r\n_After upgrading from 1.x, please check your individual devices in Settings › Scrolling._\r\n",
-      "draft": false,
-      "prerelease": true,
-      "created_at": "2026-10-16T15:14:40Z",
-      "updated_at": "2026-10-17T13:33:44Z",
-      "published_at": "2026-10-16T20:17:36Z",
       "assets": []
     }
   ]
