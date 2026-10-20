@@ -27,6 +27,19 @@ typedef NS_ENUM(NSInteger, UpdateMode) {
     UpdateModeInstall,
 };
 
+// A button that opens a link, so it shows the pointing hand, as LinkView does.
+@interface LinkButton : NSButton
+@end
+
+@implementation LinkButton
+
+- (void)resetCursorRects
+{
+    [self addCursorRect:self.bounds cursor:[NSCursor pointingHandCursor]];
+}
+
+@end
+
 @interface PrefsWindowController ()
 @property UpdateMode updateMode;
 @property NSTabView *tabView;
@@ -51,6 +64,11 @@ typedef NS_ENUM(NSInteger, UpdateMode) {
 - (IBAction)buttonCheckForUpdatesClicked:(id)sender
 {    
     [self.updater checkForUpdates];
+}
+
+- (IBAction)buttonCoffeeClicked:(id)sender
+{
+    [[NSWorkspace sharedWorkspace] openURL:self.appDelegate.appCoffeeLink];
 }
 
 // the Automatic updates menu combines two Sparkle settings
@@ -535,11 +553,23 @@ static NSStackView *stack(NSUserInterfaceLayoutOrientation orientation, NSLayout
     NSTextField *const creditLabel=label([NSTextField labelWithString:appDelegate.appCredit], infoFont, [NSColor labelColor]);
     LinkView *const linkLabel=(LinkView *)label([LinkView labelWithString:appDelegate.appDisplayLink], infoFont, [NSColor controlAccentColor]);
     linkLabel.url=appDelegate.appLink;
-    // the stack stretches the labels to the widest one, so centre the text within them
+    // the stack stretches the labels to the widest one, so centre the text within them; and its hugging
+    // can squeeze them otherwise
     for (NSTextField *field in @[nameLabel, versionLabel, creditLabel, linkLabel]) {
         field.alignment=NSTextAlignmentCenter;
+        [field setContentCompressionResistancePriority:NSLayoutPriorityRequired forOrientation:NSLayoutConstraintOrientationHorizontal];
     }
-    NSStackView *const info=stack(NSUserInterfaceLayoutOrientationVertical, NSLayoutAttributeCenterX, 0, @[nameLabel, versionLabel, creditLabel, linkLabel]);
+    // Buy Me a Coffee's own button, at a size to suit the text above it
+    NSButton *const coffeeButton=[LinkButton buttonWithImage:[NSImage imageNamed:@"BuyMeACoffee"] target:self action:@selector(buttonCoffeeClicked:)];
+    coffeeButton.translatesAutoresizingMaskIntoConstraints=NO;
+    coffeeButton.bordered=NO;
+    coffeeButton.imageScaling=NSImageScaleProportionallyUpOrDown;
+    coffeeButton.accessibilityLabel=@"Buy Me a Coffee";
+    coffeeButton.toolTip=appDelegate.appCoffeeLink.absoluteString;
+    [coffeeButton.widthAnchor constraintEqualToConstant:100].active=YES;
+    [coffeeButton.heightAnchor constraintEqualToConstant:28].active=YES;
+    NSStackView *const info=stack(NSUserInterfaceLayoutOrientationVertical, NSLayoutAttributeCenterX, 0, @[nameLabel, versionLabel, creditLabel, linkLabel, coffeeButton]);
+    [info setCustomSpacing:10 afterView:linkLabel];
     [info setHuggingPriority:NSLayoutPriorityDefaultHigh forOrientation:NSLayoutConstraintOrientationHorizontal];
     [info setHuggingPriority:NSLayoutPriorityDefaultHigh forOrientation:NSLayoutConstraintOrientationVertical];
 
