@@ -15,6 +15,8 @@ static NSString *const kRowPath=@"Path";
 static NSString *const kRowCustomName=@"CustomName";
 static NSString *const kRowVerticalMode=@"VerticalMode";
 static NSString *const kRowHorizontalMode=@"HorizontalMode";
+// replaced by HorizontalMode: YES for Match vertical, NO for Unchanged
+static NSString *const kRowHorizontalMatchesVertical=@"HorizontalMatchesVertical";
 static NSString *const kRowStepSizeEnabled=@"StepSizeEnabled";
 static NSString *const kRowStepSize=@"StepSize";
 static NSString *const kRowFirstSeen=@"FirstSeen";
@@ -47,6 +49,8 @@ static NSDate *_dateValue(id obj)
 - (void)rowSettingsDidChange;
 @end
 
+static BOOL _reverses(ScrollDirectionMode mode, BOOL natural);
+
 #pragma mark -
 
 @interface SourceRow ()
@@ -68,10 +72,8 @@ static NSDate *_dateValue(id obj)
 
 @implementation SourceRow
 
-/* Defaults: trackpads natural, other devices classic, and apps unchanged. Horizontal scrolling is
- unchanged: continuous horizontal scrolling, as on trackpads and the Magic Mouse, doubles as gestures
- such as swiping between pages, and thumb wheels, as on the MX Master, roll at right angles to the way
- they scroll, so matching vertical surprises people. Step size is as in 1.x. */
+/* Defaults: trackpads natural, other devices classic, and apps unchanged. Horizontal scrolling matches
+ vertical. Step size is as in 1.x. */
 - (instancetype)initWithSource:(ScrollSource *)source table:(SourceTable *)table
 {
     self=[super init];
@@ -85,7 +87,7 @@ static NSDate *_dateValue(id obj)
         _path=source.path;
         const BOOL trackpad=_category==ScrollSourceCategoryTrackpad;
         _verticalMode=!self.hasDeviceDirection?ScrollDirectionModeUnchanged:trackpad?ScrollDirectionModeNatural:ScrollDirectionModeClassic;
-        _horizontalMode=ScrollDirectionModeUnchanged;
+        _horizontalMode=ScrollDirectionModeMatchVertical;
         _stepSizeEnabled=YES;
         _stepSize=3;
         _lastSeenTime=CFAbsoluteTimeGetCurrent();
@@ -111,12 +113,6 @@ static NSDate *_dateValue(id obj)
         _path=_stringValue(dict[kRowPath]);
         _customName=_stringValue(dict[kRowCustomName]);
         _verticalMode=[_numberValue(dict[kRowVerticalMode]) integerValue];
-        // Unchanged for rows saved with the old Match vertical mode (4), or with only the older
-        // HorizontalMatchesVertical key
-        _horizontalMode=[_numberValue(dict[kRowHorizontalMode]) integerValue];
-        if (_horizontalMode<ScrollDirectionModeUnchanged||_horizontalMode>ScrollDirectionModeReversed) {
-            _horizontalMode=ScrollDirectionModeUnchanged;
-        }
         _stepSizeEnabled=[_numberValue(dict[kRowStepSizeEnabled]) boolValue];
         _stepSize=[_numberValue(dict[kRowStepSize]) integerValue];
         NSDate *const lastSeen=_dateValue(dict[kRowLastSeen])?:[NSDate date];
@@ -127,6 +123,18 @@ static NSDate *_dateValue(id obj)
         _seenClassic=[_numberValue(dict[kRowSeenClassic]) boolValue];
         // rows saved before this was kept: natural if it's been seen, which is a guess if classic has too
         _lastNatural=[(_numberValue(dict[kRowLastNatural])?:@(_seenNatural)) boolValue];
+        /* Horizontal was once Natural or Classic for devices. Those become whichever of Reversed and Unchanged
+         does the same with the direction the system last delivered the source's scrolling in, or natural, as
+         macOS has by default, if it hasn't been seen. Rows with only the older HorizontalMatchesVertical key
+         are Match vertical or Unchanged. */
+        NSNumber *const horizontalMode=_numberValue(dict[kRowHorizontalMode]);
+        if (horizontalMode?[horizontalMode integerValue]==ScrollDirectionModeMatchVertical:[_numberValue(dict[kRowHorizontalMatchesVertical]) boolValue]) {
+            _horizontalMode=ScrollDirectionModeMatchVertical;
+        }
+        else {
+            const BOOL natural=_seenNatural||_seenClassic?_lastNatural:YES;
+            _horizontalMode=_reverses([horizontalMode integerValue], natural)?ScrollDirectionModeReversed:ScrollDirectionModeUnchanged;
+        }
     }
     return self;
 }
@@ -172,7 +180,7 @@ static NSDate *_dateValue(id obj)
     return started;
 }
 
-// Whether a mode reverses an event.
+// Whether a mode other than Match vertical reverses an event.
 static BOOL _reverses(ScrollDirectionMode mode, BOOL natural)
 {
     return mode==ScrollDirectionModeReversed||
@@ -182,10 +190,12 @@ static BOOL _reverses(ScrollDirectionMode mode, BOOL natural)
 
 - (SourceAdjustment)adjustmentForNatural:(BOOL)natural
 {
+    const BOOL reverseVertical=_reverses(self.verticalMode, natural);
+    const ScrollDirectionMode horizontalMode=self.horizontalMode;
     return (SourceAdjustment){
-        .reverseVertical=_reverses(self.verticalMode, natural),
-        .reverseHorizontal=_reverses(self.horizontalMode, natural),
-        .stepSize=self.continuous||!self.stepSizeEnabled?1:MIN(MAX(self.stepSize, SourceRowMinStepSize), SourceRowMaxStepSize),
+        .reverseVertical=reverseVertical,
+        .reverseHorizontal=horizontalMode==ScrollDirectionModeMatchVertical?reverseVertical:_reverses(horizontalMode, natural),
+        .stepSize=self.continuous||!self.stepSizeEnabled?0:MIN(MAX(self.stepSize, SourceRowMinStepSize), SourceRowMaxStepSize),
     };
 }
 
@@ -294,6 +304,10 @@ static BOOL _reverses(ScrollDirectionMode mode, BOOL natural)
             SourceRow *const row=_stringValue(key)?[[SourceRow alloc] initWithKey:key dictionary:obj table:self]:nil;
             if (row) {
                 self.rowsByKey[key]=row;
+                // save a row whose horizontal mode was converted, so it's converted only once
+                if (![obj[kRowHorizontalMode] isEqual:@(row.horizontalMode)]) {
+                    [self rowSettingsDidChange];
+                }
             }
         }];
         NSLog(@"Loaded %lu source rows", (unsigned long)[self.rowsByKey count]);

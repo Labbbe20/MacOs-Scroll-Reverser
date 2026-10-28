@@ -28,12 +28,12 @@ Scrolling direction options are as follows:
 
 - For **devices**, the system-defined scrolling direction is obtained using `[NSEvent isDirectionInvertedFromDevice]`, and the the direction options are **Natural** or **Classic**, with reversing applied as needed to give the desired outcome. A third option, **Unchanged**, acts as a passthrough.
 - For **apps** and **unidentified** sources, which do not indicate the underlying scrolling direction, the options are **Reversed** and **Unchanged**.
-- **Horizontal scrolling** has its own setting, in the source's info popover. It can be set either to match the vertical scrolling setting or be set independently.
+- **Horizontal scrolling** has its own column in the sources table. It can be set to match vertical scrolling, or to Reversed or Unchanged regardless of vertical.
 
 Default settings for newly detected scrolling sources:
 
 - **Scrolling:** Natural for trackpads, Classic for other devices (mice, in practice), and Unchanged for apps and unidentified sources. A device counts as a trackpad if its `HIDScrollAccelerationType` property is `HIDTrackpadScrollAcceleration`, or if it's driven by Apple's multitouch trackpad driver.
-- **Horizontal scrolling:** Default to Unchanged, since reversing continuous horizontal scrolling causes issues with trackpad swipe gestures (e.g back/forward swipe in browsers), and reversing the horizontal scroll wheel on popular Logitech mice causes counterintuitive results.
+- **Horizontal scrolling:** Match vertical.
 - **Step size:** defaults to on, at 3 lines.
 
 ### Code layout

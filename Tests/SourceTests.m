@@ -170,23 +170,22 @@ static ScrollSource *_continuousDevice(NSDictionary *properties)
 {
     SourceRow *const trackpad=[self trackpad];
     XCTAssertEqual(trackpad.verticalMode, ScrollDirectionModeNatural);
-    XCTAssertEqual(trackpad.horizontalMode, ScrollDirectionModeUnchanged);
+    XCTAssertEqual(trackpad.horizontalMode, ScrollDirectionModeMatchVertical);
     XCTAssertTrue(trackpad.hasDeviceDirection);
 
     SourceRow *const mouse=[self wheelMouse];
     XCTAssertEqual(mouse.verticalMode, ScrollDirectionModeClassic);
-    XCTAssertEqual(mouse.horizontalMode, ScrollDirectionModeUnchanged);
+    XCTAssertEqual(mouse.horizontalMode, ScrollDirectionModeMatchVertical);
     XCTAssertTrue(mouse.stepSizeEnabled);
     XCTAssertEqual(mouse.stepSize, 3);
 
-    // continuous scrolling from a mouse, like the Magic Mouse's, keeps horizontal swipes for gestures
     SourceRow *const magicMouse=[self.table recordSource:_continuousDevice(@{@kIOHIDTransportKey: @"Bluetooth", @kIOHIDSerialNumberKey: @"1"}) natural:YES amount:1];
     XCTAssertEqual(magicMouse.verticalMode, ScrollDirectionModeClassic);
-    XCTAssertEqual(magicMouse.horizontalMode, ScrollDirectionModeUnchanged);
+    XCTAssertEqual(magicMouse.horizontalMode, ScrollDirectionModeMatchVertical);
 
     SourceRow *const app=[self app];
     XCTAssertEqual(app.verticalMode, ScrollDirectionModeUnchanged);
-    XCTAssertEqual(app.horizontalMode, ScrollDirectionModeUnchanged);
+    XCTAssertEqual(app.horizontalMode, ScrollDirectionModeMatchVertical);
     XCTAssertFalse(app.hasDeviceDirection);
 }
 
@@ -194,11 +193,8 @@ static ScrollSource *_continuousDevice(NSDictionary *properties)
 {
     SourceRow *const row=[self trackpad];
     row.verticalMode=ScrollDirectionModeNatural;
-    row.horizontalMode=ScrollDirectionModeNatural;
     XCTAssertFalse([row adjustmentForNatural:YES].reverseVertical);
-    XCTAssertFalse([row adjustmentForNatural:YES].reverseHorizontal);
     XCTAssertTrue([row adjustmentForNatural:NO].reverseVertical);
-    XCTAssertTrue([row adjustmentForNatural:NO].reverseHorizontal);
 }
 
 - (void)testClassic
@@ -237,13 +233,13 @@ static ScrollSource *_continuousDevice(NSDictionary *properties)
                 (verticalModes[v]==ScrollDirectionModeNatural&&!natural)||
                 (verticalModes[v]==ScrollDirectionModeClassic&&natural);
             NSString *const context=[NSString stringWithFormat:@"vertical %ld, natural %d", (long)verticalModes[v], natural];
-            // horizontal modes don't depend on vertical
-            row.horizontalMode=ScrollDirectionModeNatural;
+
+            row.horizontalMode=ScrollDirectionModeMatchVertical;
             XCTAssertEqual([row adjustmentForNatural:natural].reverseVertical, reverseVertical, @"%@", context);
-            XCTAssertEqual([row adjustmentForNatural:natural].reverseHorizontal, !natural, @"%@", context);
-            row.horizontalMode=ScrollDirectionModeClassic;
-            XCTAssertEqual([row adjustmentForNatural:natural].reverseHorizontal, natural, @"%@", context);
+            XCTAssertEqual([row adjustmentForNatural:natural].reverseHorizontal, reverseVertical, @"%@", context);
+            // the other horizontal modes don't depend on vertical, or on the system's direction
             row.horizontalMode=ScrollDirectionModeReversed;
+            XCTAssertEqual([row adjustmentForNatural:natural].reverseVertical, reverseVertical, @"%@", context);
             XCTAssertTrue([row adjustmentForNatural:natural].reverseHorizontal, @"%@", context);
             row.horizontalMode=ScrollDirectionModeUnchanged;
             XCTAssertFalse([row adjustmentForNatural:natural].reverseHorizontal, @"%@", context);
@@ -251,12 +247,23 @@ static ScrollSource *_continuousDevice(NSDictionary *properties)
     }
 }
 
-// a thumb wheel set to Classic horizontally while its wheel follows the system's natural scrolling
+- (void)testHorizontalFollowsVerticalOnlyWhenMatching
+{
+    SourceRow *const row=[self wheelMouse];
+    row.horizontalMode=ScrollDirectionModeUnchanged;
+    const SourceAdjustment adjustment=[row adjustmentForNatural:YES];
+    XCTAssertTrue(adjustment.reverseVertical);
+    XCTAssertFalse(adjustment.reverseHorizontal);
+    row.horizontalMode=ScrollDirectionModeMatchVertical;
+    XCTAssertTrue([row adjustmentForNatural:YES].reverseHorizontal);
+}
+
+// a thumb wheel reversed while its wheel follows the system's natural scrolling
 - (void)testHorizontalIndependentOfVertical
 {
     SourceRow *const row=[self wheelMouse];
     row.verticalMode=ScrollDirectionModeNatural;
-    row.horizontalMode=ScrollDirectionModeClassic;
+    row.horizontalMode=ScrollDirectionModeReversed;
     const SourceAdjustment adjustment=[row adjustmentForNatural:YES];
     XCTAssertFalse(adjustment.reverseVertical);
     XCTAssertTrue(adjustment.reverseHorizontal);
@@ -267,13 +274,16 @@ static ScrollSource *_continuousDevice(NSDictionary *properties)
     SourceRow *const row=[self wheelMouse];
     row.stepSize=5;
     XCTAssertEqual([row adjustmentForNatural:YES].stepSize, 5);
-    XCTAssertEqual([[self trackpad] adjustmentForNatural:YES].stepSize, 1, @"step size is only for non-continuous scrolling");
+    XCTAssertEqual([[self trackpad] adjustmentForNatural:YES].stepSize, 0, @"step size is only for non-continuous scrolling");
     row.stepSize=0;
     XCTAssertEqual([row adjustmentForNatural:YES].stepSize, SourceRowMinStepSize);
     row.stepSize=1000;
     XCTAssertEqual([row adjustmentForNatural:YES].stepSize, SourceRowMaxStepSize);
-    row.stepSizeEnabled=NO;
+    // 1 is applied, as one line per step, unlike the step size being off
+    row.stepSize=1;
     XCTAssertEqual([row adjustmentForNatural:YES].stepSize, 1);
+    row.stepSizeEnabled=NO;
+    XCTAssertEqual([row adjustmentForNatural:YES].stepSize, 0);
 }
 
 - (void)testSightings
@@ -321,7 +331,7 @@ static ScrollSource *_continuousDevice(NSDictionary *properties)
 {
     SourceRow *const mouse=[self wheelMouse];
     mouse.verticalMode=ScrollDirectionModeUnchanged;
-    mouse.horizontalMode=ScrollDirectionModeClassic;
+    mouse.horizontalMode=ScrollDirectionModeReversed;
     mouse.stepSize=7;
     mouse.customName=@"Wheel";
     [self.table recordSource:_device(@{@kIOHIDTransportKey: @"USB", @kIOHIDVendorIDKey: @1118, @kIOHIDProductIDKey: @64}) natural:NO amount:1];
@@ -336,7 +346,7 @@ static ScrollSource *_continuousDevice(NSDictionary *properties)
     XCTAssertEqual(row.kind, ScrollSourceKindLocalDevice);
     XCTAssertEqual(row.category, ScrollSourceCategoryMouse);
     XCTAssertEqual(row.verticalMode, ScrollDirectionModeUnchanged);
-    XCTAssertEqual(row.horizontalMode, ScrollDirectionModeClassic);
+    XCTAssertEqual(row.horizontalMode, ScrollDirectionModeReversed);
     XCTAssertEqual(row.stepSize, 7);
     XCTAssertEqualObjects(row.customName, @"Wheel");
     XCTAssertFalse(row.continuous);
@@ -345,37 +355,89 @@ static ScrollSource *_continuousDevice(NSDictionary *properties)
     XCTAssertEqualWithAccuracy(row.lastSeenTime, mouse.lastSeenTime, 0.001);
 }
 
-// rows saved with the old Match vertical mode (4), or with only the older HorizontalMatchesVertical key
-- (void)testMatchVerticalLoadsAsUnchanged
+// rows saved with Match vertical, or with only the older HorizontalMatchesVertical key
+- (void)testMatchVerticalIsLoaded
 {
     NSDictionary *const saved=@{@"Kind": @(ScrollSourceKindLocalDevice), @"Category": @(ScrollSourceCategoryMouse)};
     NSMutableDictionary *const matchVertical=[saved mutableCopy];
-    matchVertical[@"HorizontalMode"]=@4;
+    matchVertical[@"HorizontalMode"]=@(ScrollDirectionModeMatchVertical);
     NSMutableDictionary *const oldMatching=[saved mutableCopy];
     oldMatching[@"HorizontalMatchesVertical"]=@YES;
     NSMutableDictionary *const oldUnchanged=[saved mutableCopy];
     oldUnchanged[@"HorizontalMatchesVertical"]=@NO;
-    NSMutableDictionary *const natural=[saved mutableCopy];
-    natural[@"HorizontalMatchesVertical"]=@YES;
-    natural[@"HorizontalMode"]=@(ScrollDirectionModeNatural);
-    [self.defaults setObject:@{@"matchVertical": matchVertical, @"oldMatching": oldMatching, @"oldUnchanged": oldUnchanged, @"natural": natural} forKey:@"Sources"];
+    NSMutableDictionary *const reversed=[saved mutableCopy];
+    reversed[@"HorizontalMatchesVertical"]=@YES;
+    reversed[@"HorizontalMode"]=@(ScrollDirectionModeReversed);
+    [self.defaults setObject:@{@"matchVertical": matchVertical, @"oldMatching": oldMatching, @"oldUnchanged": oldUnchanged, @"reversed": reversed} forKey:@"Sources"];
 
     SourceTable *const loaded=[[SourceTable alloc] initWithUserDefaults:self.defaults];
     NSMutableDictionary<NSString *, SourceRow *> *const rows=[NSMutableDictionary dictionary];
     for (SourceRow *row in loaded.rows) {
         rows[row.key]=row;
     }
-    XCTAssertEqual(rows[@"matchVertical"].horizontalMode, ScrollDirectionModeUnchanged);
-    XCTAssertEqual(rows[@"oldMatching"].horizontalMode, ScrollDirectionModeUnchanged);
+    XCTAssertEqual(rows[@"matchVertical"].horizontalMode, ScrollDirectionModeMatchVertical);
+    XCTAssertEqual(rows[@"oldMatching"].horizontalMode, ScrollDirectionModeMatchVertical);
     XCTAssertEqual(rows[@"oldUnchanged"].horizontalMode, ScrollDirectionModeUnchanged);
-    XCTAssertEqual(rows[@"natural"].horizontalMode, ScrollDirectionModeNatural);
+    XCTAssertEqual(rows[@"reversed"].horizontalMode, ScrollDirectionModeReversed, @"the new key wins");
 
-    // saved again as Unchanged, without the older key
-    rows[@"natural"].stepSize=4;
+    // saved again under the new key only
     [loaded save];
     NSDictionary *const resaved=[self.defaults dictionaryForKey:@"Sources"];
-    XCTAssertEqualObjects(resaved[@"matchVertical"][@"HorizontalMode"], @(ScrollDirectionModeUnchanged));
+    XCTAssertEqualObjects(resaved[@"matchVertical"][@"HorizontalMode"], @(ScrollDirectionModeMatchVertical));
+    XCTAssertEqualObjects(resaved[@"oldMatching"][@"HorizontalMode"], @(ScrollDirectionModeMatchVertical));
     XCTAssertNil(resaved[@"oldMatching"][@"HorizontalMatchesVertical"]);
+}
+
+// Natural and Classic horizontal, from earlier versions, become whichever of Reversed and Unchanged does
+// the same with the direction the source was last seen in, or natural if it hasn't been seen.
+- (void)testNaturalAndClassicHorizontalAreConverted
+{
+    NSDictionary *const saved=@{@"Kind": @(ScrollSourceKindLocalDevice), @"Category": @(ScrollSourceCategoryMouse)};
+    NSDictionary *const seenNatural=@{@"SeenNatural": @YES, @"LastNatural": @YES};
+    NSDictionary *const seenClassic=@{@"SeenClassic": @YES, @"LastNatural": @NO};
+    NSDictionary *const unseen=@{};
+    NSArray *const cases=@[
+        // mode, how it was last seen, whether it was seen natural, expected
+        @[@(ScrollDirectionModeNatural), seenNatural, @YES, @(ScrollDirectionModeUnchanged)],
+        @[@(ScrollDirectionModeNatural), seenClassic, @NO, @(ScrollDirectionModeReversed)],
+        @[@(ScrollDirectionModeNatural), unseen, @YES, @(ScrollDirectionModeUnchanged)],
+        @[@(ScrollDirectionModeClassic), seenNatural, @YES, @(ScrollDirectionModeReversed)],
+        @[@(ScrollDirectionModeClassic), seenClassic, @NO, @(ScrollDirectionModeUnchanged)],
+        @[@(ScrollDirectionModeClassic), unseen, @YES, @(ScrollDirectionModeReversed)],
+        @[@(ScrollDirectionModeReversed), seenNatural, @YES, @(ScrollDirectionModeReversed)],
+        @[@(ScrollDirectionModeUnchanged), seenClassic, @NO, @(ScrollDirectionModeUnchanged)],
+    ];
+    NSMutableDictionary *const sources=[NSMutableDictionary dictionary];
+    [cases enumerateObjectsUsingBlock:^(NSArray *c, NSUInteger i, BOOL *stop) {
+        NSMutableDictionary *const dict=[saved mutableCopy];
+        dict[@"HorizontalMode"]=c[0];
+        [dict addEntriesFromDictionary:c[1]];
+        sources[[NSString stringWithFormat:@"%lu", (unsigned long)i]]=dict;
+    }];
+    [self.defaults setObject:sources forKey:@"Sources"];
+
+    SourceTable *const loaded=[[SourceTable alloc] initWithUserDefaults:self.defaults];
+    NSMutableDictionary<NSString *, SourceRow *> *const rows=[NSMutableDictionary dictionary];
+    for (SourceRow *row in loaded.rows) {
+        rows[row.key]=row;
+    }
+    [cases enumerateObjectsUsingBlock:^(NSArray *c, NSUInteger i, BOOL *stop) {
+        SourceRow *const row=rows[[NSString stringWithFormat:@"%lu", (unsigned long)i]];
+        const ScrollDirectionMode old=[c[0] integerValue];
+        const BOOL natural=[c[2] boolValue];
+        XCTAssertEqual(row.horizontalMode, [c[3] integerValue], @"case %lu", (unsigned long)i);
+        // the same as before for scrolling in the direction last seen
+        const BOOL reversedBefore=old==ScrollDirectionModeReversed||(old==ScrollDirectionModeNatural&&!natural)||(old==ScrollDirectionModeClassic&&natural);
+        XCTAssertEqual([row adjustmentForNatural:natural].reverseHorizontal, reversedBefore, @"case %lu", (unsigned long)i);
+    }];
+
+    // and saved, so they're converted only once
+    [loaded save];
+    NSDictionary *const resaved=[self.defaults dictionaryForKey:@"Sources"];
+    [cases enumerateObjectsUsingBlock:^(NSArray *c, NSUInteger i, BOOL *stop) {
+        NSString *const key=[NSString stringWithFormat:@"%lu", (unsigned long)i];
+        XCTAssertEqualObjects(resaved[key][@"HorizontalMode"], c[3], @"case %lu", (unsigned long)i);
+    }];
 }
 
 // rows saved before the last direction was kept

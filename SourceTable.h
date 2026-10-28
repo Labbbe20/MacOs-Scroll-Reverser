@@ -14,6 +14,7 @@ typedef NS_ENUM(NSInteger, ScrollDirectionMode) {
     ScrollDirectionModeNatural,
     ScrollDirectionModeClassic,
     ScrollDirectionModeReversed,
+    ScrollDirectionModeMatchVertical, // horizontal only: reversed whenever vertical is
 };
 
 // Step size is in lines per step of a non-continuous scroll wheel.
@@ -31,7 +32,7 @@ extern NSNotificationName const SourceRowDidStartScrollingNotification;
 typedef struct {
     BOOL reverseVertical;
     BOOL reverseHorizontal;
-    NSInteger stepSize; // 1 for no change
+    NSInteger stepSize; // lines per wheel step, or 0 to leave steps as macOS delivers them
 } SourceAdjustment;
 
 // The settings and history for one source. Settings changes are saved automatically.
@@ -51,8 +52,8 @@ typedef struct {
 // The user's name for the source, or nil to use the reported one. Empty strings are stored as nil.
 @property (nullable, nonatomic, copy) NSString *customName;
 @property (nonatomic) ScrollDirectionMode verticalMode;
-// Natural and Classic are absolute, as for vertical, which matters for devices such as thumb wheels
-// that roll one way but scroll the other.
+// Match vertical, Reversed or Unchanged, for any source: natural and classic aren't meaningful sideways for
+// many sources, such as Shift+scroll on a wheel, or Logitech thumb wheels that roll one way but scroll the other.
 @property (nonatomic) ScrollDirectionMode horizontalMode;
 @property (nonatomic) BOOL stepSizeEnabled;
 @property (nonatomic) NSInteger stepSize;
