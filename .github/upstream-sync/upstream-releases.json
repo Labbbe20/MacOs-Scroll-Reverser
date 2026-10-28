@@ -2,6 +2,26 @@
   "upstream_repository": "pilotmoon/Scroll-Reverser",
   "releases": [
     {
+      "tag_name": "b20645",
+      "name": "Scroll Reverser build 20645",
+      "body": "- Horizontal scrolling now has its own column in the sources table, next to Vertical, and is no longer tucked away in the info popover where it might be overlooked. (Thanks for the loud feedback on this.)\n- The horizontal choices are now Match vertical (default for new devices), Reversed and Unchanged, because \"Natural\" and \"Classic\" don't make sense in all horizontal contexts. (Your current behaviour will be preserved.)\n- The source info popover now updates its details live if they change while it's showing.\n- Fixed bug where a step size of 1 was not being respected (regression in 2.0). (#216)\n\n**Full Changelog**: https://github.com/pilotmoon/Scroll-Reverser/compare/v2.0.2...b20645\n",
+      "draft": false,
+      "prerelease": true,
+      "created_at": "2026-10-27T14:41:55Z",
+      "updated_at": "2026-10-27T15:00:40Z",
+      "published_at": "2026-10-27T15:00:40Z",
+      "assets": [
+        {
+          "id": 681926607,
+          "name": "ScrollReverser-build-20645.zip",
+          "size": 1759062,
+          "content_type": "application/zip",
+          "updated_at": "2026-10-27T15:00:39Z",
+          "digest": "sha256:e047c23af0f63b672f9611fc829044f600cf663c6741b5187af4b9dd272f4f23"
+        }
+      ]
+    },
+    {
       "tag_name": "v2.0.2",
       "name": "Scroll Reverser 2.0.2",
       "body": "- After feedback from Logitech MX Master mouse users, the _horizontal_ scrolling default is now \"Unchanged\" for all devices. This is the same as the v1.x default. (Adjust horizontal scrolling in the popover that appears when you click the \"i\"-button.)\r\n- Refined the wording and layout of the update checking settings for clarity and correctness.\r\n\r\n**Full Changelog**: https://github.com/pilotmoon/Scroll-Reverser/compare/v2.0...v2.0.2",
@@ -38,26 +58,6 @@
           "content_type": "application/zip",
           "updated_at": "2026-10-19T19:06:16Z",
           "digest": "sha256:9b304a08c902a123381d85c7e38e17a462e8b6edaba9336646a5769ff15b3f80"
-        }
-      ]
-    },
-    {
-      "tag_name": "b20627",
-      "name": "Scroll Reverser build 20627 -- v2.0 candidate 3",
-      "body": "- Fixed the \"Automatic updates:\" label being missing in some langauges.\r\n\r\n**Full Changelog**: https://github.com/pilotmoon/Scroll-Reverser/compare/b20626...b20627",
-      "draft": false,
-      "prerelease": false,
-      "created_at": "2026-10-17T13:26:31Z",
-      "updated_at": "2026-10-17T16:36:44Z",
-      "published_at": "2026-10-17T13:32:10Z",
-      "assets": [
-        {
-          "id": 650624341,
-          "name": "ScrollReverser-build-20627.zip",
-          "size": 1752041,
-          "content_type": "application/zip",
-          "updated_at": "2026-10-17T14:04:14Z",
-          "digest": "sha256:0b80ee179f7556d3a29425f01153e456f06fb6ebdd6457bb2c51d8c6b89372fd"
         }
       ]
     }
