@@ -2,6 +2,26 @@
   "upstream_repository": "pilotmoon/Scroll-Reverser",
   "releases": [
     {
+      "tag_name": "v2.1.1",
+      "name": "Scroll Reverser 2.1.1",
+      "body": "- Fixed bug where a step size was not being applied if set to exactly 1.\n- Changed the \"i\" button to a \"gear\" button to better suggest that it leads to more settings.\n- Added a popover hint to tell the user that horizontal scrolling settings are under the gear button.\n- Changed the default horizontal scrolling for newly discovered devices to be \"Match vertical\", which reverses whenever vertical scrolling would be reversed. The horizontal manual override options are now \"Reversed\", or \"Unchanged\", because \"Natural\" and \"Classic\" don't make sense in all horizontal contexts. (Your current behaviour will be preserved when you update.)\n\n**Full Changelog**: https://github.com/pilotmoon/Scroll-Reverser/compare/v2.0.2...v2.1.1\n",
+      "draft": false,
+      "prerelease": false,
+      "created_at": "2026-11-03T17:01:38Z",
+      "updated_at": "2026-11-04T11:43:51Z",
+      "published_at": "2026-11-04T11:43:51Z",
+      "assets": [
+        {
+          "id": 709290782,
+          "name": "ScrollReverser-2.1.1.zip",
+          "size": 1765563,
+          "content_type": "application/zip",
+          "updated_at": "2026-11-04T11:43:50Z",
+          "digest": "sha256:654a2bbb368f39cf7ca9adcb4d83c12c572f2c64886ef5012949afd81cf69691"
+        }
+      ]
+    },
+    {
       "tag_name": "b20645",
       "name": "Scroll Reverser build 20645",
       "body": "- Horizontal scrolling now has its own column in the sources table, next to Vertical, and is no longer tucked away in the info popover where it might be overlooked. (Thanks for the loud feedback on this.)\n- The horizontal choices are now Match vertical (default for new devices), Reversed and Unchanged, because \"Natural\" and \"Classic\" don't make sense in all horizontal contexts. (Your current behaviour will be preserved.)\n- The source info popover now updates its details live if they change while it's showing.\n- Fixed bug where a step size of 1 was not being respected (regression in 2.0). (#216)\n\n**Full Changelog**: https://github.com/pilotmoon/Scroll-Reverser/compare/v2.0.2...b20645\n",
@@ -38,26 +58,6 @@
           "content_type": "application/zip",
           "updated_at": "2026-10-20T16:21:57Z",
           "digest": "sha256:5d0978885f34c5f0d99d3b50578f1d0550b0be7ed069870f440a3a0ddbc86f99"
-        }
-      ]
-    },
-    {
-      "tag_name": "v2.0",
-      "name": "Scroll Reverser 2.0",
-      "body": "Scroll Reverser 2.0 aims to solve common pain points of the 1.x versions and be even simpler to use. The app remains free and open source. _After upgrading from 1.x, please check your individual devices in Settings › Scrolling._\r\n\r\n<img width=\"1700\" height=\"940\" alt=\"srshot-2 0\" src=\"https://github.com/user-attachments/assets/cfca9bde-8eb6-4dd5-b640-7a0ce5b94266\" />\r\n\r\nWhat's new in 2.0:\r\n\r\n- **A setting for each device.** Each individual trackpad, mouse or other input device now has its own scroll direction setting. Devices appear in Settings › Scrolling the first time you use them.\r\n\r\n- **Direction is set as \"natural\" or \"classic\".** Specify the outcome you want, instead how to get there. Trackpads default to natural, mice default to classic.\r\n\r\n- **More reliable and more efficient.** Scroll Reverser no longer detects trackpad usage using a gesture event tap. Instead, it reads device information directly. Instability of the gesture tap was was a frequent source of unreliability in previous versions.\r\n\r\n- **Better support for remote input devices.** Devices connected via Universal Control are recognised correctly, and a new \"unchanged\" option acts as a passthrough for situations like Screen Sharing.\r\n\r\n- **Only needs Accessibility permission.** Input Monitoring permission is no longer required.\r\n\r\nFixed:\r\n\r\n- Fixed bug where Scroll reverser could suddenly stop working and need to be relaunched.\r\n- Fixed the menu bar icon appearing blurry on displays with a different resolution from the main display.\r\n- Fixed long lines in the debug console wrapping incorrectly.\r\n\r\nAdded/Changed:\r\n\r\n- \"Preferences\" is now called \"Settings\", to match macOS.\r\n- Updated Sparkle (auto-update framework) to version 2.10.0.\r\n- Added Persian localization.\r\n",
-      "draft": false,
-      "prerelease": false,
-      "created_at": "2026-10-19T18:32:42Z",
-      "updated_at": "2026-10-19T19:06:30Z",
-      "published_at": "2026-10-19T19:06:30Z",
-      "assets": [
-        {
-          "id": 657165358,
-          "name": "ScrollReverser-2.0.zip",
-          "size": 1757379,
-          "content_type": "application/zip",
-          "updated_at": "2026-10-19T19:06:16Z",
-          "digest": "sha256:9b304a08c902a123381d85c7e38e17a462e8b6edaba9336646a5769ff15b3f80"
         }
       ]
     }
